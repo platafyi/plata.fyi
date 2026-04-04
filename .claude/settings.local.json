@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.levels.fyi)",
+      "WebSearch",
+      "WebFetch(domain:www.crm.com.mk)",
+      "WebFetch(domain:api.opencorporates.com)",
+      "Read(//Users/mariodavchevski/Other/scoutfox/internal/database/**)",
+      "Read(//Users/mariodavchevski/Other/scoutfox/cmd/api/**)",
+      "WebFetch(domain:www.companywall.com.mk)",
+      "Bash(curl -s \"https://www.companywall.com.mk/prebaruvanje?n=%D0%A2%D0%B5%D0%BB%D0%B5%D0%BA%D0%BE%D0%BC\" -H \"User-Agent: Mozilla/5.0\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s \"https://www.companywall.com.mk/prebaruvanje?cr=MKD&n=&sbjact=e&bly=2024&p=1\")",
+      "Bash(curl -s \"https://www.companywall.com.mk/prebaruvanje?cr=MKD&n=&sbjact=e&bly=2024&p=3\")",
+      "Bash(curl -s \"https://www.companywall.com.mk/prebaruvanje?cr=MKD&n=&sbjact=e&bly=2024&p=2\")",
+      "WebFetch(domain:help.brevo.com)",
+      "Bash(curl -s https://resend.com/docs/api-reference/emails/retrieve-email)",
+      "WebFetch(domain:resend.com)",
+      "Bash(go build:*)",
+      "WebFetch(domain:developers.brevo.com)"
+    ]
+  }
+}

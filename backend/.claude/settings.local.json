@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:forwardemail.net)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:postmarkapp.com)",
+      "WebFetch(domain:mailpace.com)",
+      "WebFetch(domain:migadu.com)",
+      "WebFetch(domain:purelymail.com)",
+      "WebFetch(domain:www.activecampaign.com)",
+      "WebFetch(domain:resend.com)",
+      "WebFetch(domain:docs.mailpace.com)",
+      "WebFetch(domain:proton.me)",
+      "Read(//private/tmp/**)",
+      "Bash(gh repo:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}

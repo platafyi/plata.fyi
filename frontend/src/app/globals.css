@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --ink: rgb(40, 40, 37);
+    --shadow-sm: 2px 2px 0 0 rgb(40, 40, 37);
+    --shadow-md: 3px 3px 0 0 rgb(40, 40, 37);
+    --shadow-lg: 4px 4px 0 0 rgb(40, 40, 37);
+    --shadow-xl: 6px 6px 0 0 rgb(40, 40, 37);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-manrope), sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background-color: #ffffff;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-jost), sans-serif;
+    font-weight: 700;
+    color: var(--ink);
+  }
+}
+
+@layer components {
+  /* ── Buttons ─────────────────────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center font-semibold border-2 px-4 py-2 text-sm cursor-pointer select-none;
+    border-color: var(--ink);
+    border-radius: 4px;
+    box-shadow: var(--shadow-md);
+    color: var(--ink);
+    transition: transform 80ms ease, box-shadow 80ms ease;
+  }
+  .btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 0 rgb(40, 40, 37);
+  }
+  .btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+  .btn-primary {
+    @apply btn;
+    background-color: #fe91e6;
+  }
+  .btn-black {
+    @apply btn;
+    background-color: var(--ink);
+    color: #ffffff;
+  }
+  .btn-white {
+    @apply btn;
+    background-color: #ffffff;
+  }
+  .btn-danger {
+    @apply btn;
+    background-color: #ef4444;
+    color: #ffffff;
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────────────── */
+  .input {
+    @apply w-full bg-white text-sm px-3 py-2.5 font-medium;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+    outline: none;
+    font-family: var(--font-manrope), sans-serif;
+    color: var(--ink);
+  }
+  .input:focus {
+    box-shadow: var(--shadow-md);
+  }
+  .input::placeholder {
+    color: rgb(40, 40, 37, 0.4);
+    font-weight: 400;
+  }
+
+  /* ── Cards ───────────────────────────────────────────────────────── */
+  .card {
+    @apply bg-white p-5;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    box-shadow: var(--shadow-md);
+  }
+  .card-lg {
+    @apply bg-white p-8;
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* ── Tags / Pills ────────────────────────────────────────────────── */
+  .tag {
+    @apply inline-flex items-center text-xs font-semibold px-2 py-0.5;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 80ms ease, box-shadow 80ms ease;
+  }
+  .tag:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 0 rgb(40, 40, 37);
+  }
+  .tag:active {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+  .tag-lime    { background-color: #e7fe05; }
+  .tag-yellow  { background-color: #f6cb44; }
+  .tag-pink    { background-color: #fe91e6; }
+  .tag-green   { background-color: #38ed81; }
+  .tag-teal    { background-color: #20a291; color: #fff; }
+  .tag-purple  { background-color: #9723c9; color: #fff; }
+  .tag-white   { background-color: #ffffff; }
+
+  /* ── Section labels ──────────────────────────────────────────────── */
+  .label {
+    @apply text-xs font-bold uppercase tracking-widest;
+    opacity: 0.45;
+  }
+}
