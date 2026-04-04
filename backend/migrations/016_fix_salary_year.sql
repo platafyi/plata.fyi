@@ -1,0 +1,1 @@
+UPDATE salary_submissions SET salary_year = 2026 WHERE salary_year = 0;

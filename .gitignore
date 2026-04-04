@@ -1,0 +1,41 @@
+# Backups
+backup_*.sql
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Go
+# backend/vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+backend/bin/
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+*.log
+
+# Kubernetes secrets (never commit)
+conf/k8s/api/secret.yaml
+conf/k8s/postgres/secret.yaml
