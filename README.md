@@ -110,6 +110,9 @@ In production, migrations are applied automatically by the deploy pipeline befor
    ```
 5. **Open a pull request** against `main` with a clear description of what and why.
 
+Please use [Conventional Commits](https://www.conventionalcommits.org/) for your commit messages, e.g. 
+`feat: add company search`, `fix: handle missing token`, `docs: update contributing guide`.
+
 A few things to keep in mind:
 
 - Please include tests for backend changes. Existing tests should keep passing.
