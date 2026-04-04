@@ -5,9 +5,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://plata.fyi";
 
   const [industries, cities, salaries] = await Promise.all([
-    getIndustries(),
-    getCities(),
-    getSalaries({ page_size: "500" }),
+    getIndustries().catch(() => []),
+    getCities().catch(() => []),
+    getSalaries({ page_size: "500" }).catch(() => ({ data: [] })),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
