@@ -134,7 +134,6 @@ jobs:
       - name: Apply secrets
         run: |
           kubectl apply -f k8s/namespace.yaml
-          kubectl apply -f k8s/postgres/secret.yaml
           kubectl apply -f k8s/backend/secret.yaml
 
       - name: Inject runtime secrets
