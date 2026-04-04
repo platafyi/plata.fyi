@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Anonymous salary sharing for Macedonian workers. No accounts, no passwords, no email — fill out a form, pass a Cloudflare 
-Turnstile check, get a session token stored in your browser. All data is public and anonymous.
+[Turnstile](https://www.cloudflare.com/application-services/products/turnstile/) check, get a session token stored in your browser. All data is public and anonymous.
 
 Every deployment automatically publishes a full CSV snapshot of all salary data as a [GitHub Release](../../releases). Free to download and use.
 
@@ -19,7 +19,6 @@ Inspired by [levels.fyi](https://levels.fyi).
 - **Frontend** — Next.js 14 (App Router), TypeScript, Tailwind CSS
 - **Database** — PostgreSQL 16
 - **Bot protection** — Cloudflare Turnstile
-- **Currency** — MKD only (Macedonian Denar)
 
 ---
 
@@ -62,6 +61,8 @@ Tokens expire after 30 days. Currently, there's no way to refresh a session.
 `created_at` and `updated_at` on salary submissions are stored at month precision only 
 (e.g. `2026-04-01`, not `2026-04-23 14:32:05`).
 
+TODO: Now that plata doesn't send any e-mails this obfuscation is not needed. 
+
 ---
 
 ## Running tests
@@ -86,7 +87,8 @@ Migrations are plain `.sql` files in `backend/migrations/`, numbered sequentiall
 The custom runner in `backend/cmd/migrate/` applies them in order and tracks applied files in a `schema_migrations` table, 
 so each file runs exactly once.
 
-Migrations are only forward (up). No backwards (down) migrations allowed. 
+Migrations are only forward (up). No backwards (down) migrations allowed. If you need to revert something, just make
+a forward migration. 
 
 To add a migration:
 

@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/platafyi/plata.fyi/internal/database"
 	_ "github.com/lib/pq"
+	"github.com/platafyi/plata.fyi/internal/database"
 )
 
 func testDSN() string {
