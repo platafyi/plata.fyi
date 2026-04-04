@@ -95,7 +95,7 @@ In production, migrations are applied automatically by the deploy pipeline befor
 
 ## Contributing
 
-1. **Fork** the repo and create a branch from `main`.
+1. **Clone** the repo and create a branch from `main`.
 2. **Set up locally** — follow the [Local development](#local-development) steps above.
 3. **Make your changes** — keep PRs focused; one concern per PR.
 4. **Run tests** — backend tests are required to pass before opening a PR:
@@ -121,8 +121,10 @@ If you do add one, run `go mod tidy && go mod vendor`.
 
 Deployment is fully automated via [GitHub Actions](.github/workflows/deploy.yml). Every push to `main`:
 
-1. Builds and pushes Docker images to GitHub Container Registry
-2. Exports an anonymous CSV snapshot of the salary data and publishes it as a GitHub Release
-3. Applies Kubernetes manifests and rolls out the new images
+1. **Builds** Docker images for the API and frontend and pushes them to GitHub Container Registry (`ghcr.io/platafyi/api`, `ghcr.io/platafyi/frontend`) tagged with the commit SHA.
+2. **Backs up** the live database by exporting an anonymous CSV snapshot and publishing it as a GitHub Release.
+3. **Deploys** by applying Kubernetes manifests via `kubectl apply -k k8s/` and waiting for the rollout to complete.
 
-Manifests are in `k8s/`. Required GitHub secrets: `KUBECONFIG`, `TURNSTILE_SECRET`, `DB_URL`.
+Manifests are in `k8s/` (managed with Kustomize). The deploy job patches the image tag to the current commit SHA before applying, so each deploy is pinned to an exact build.
+
+Required GitHub secrets: `KUBECONFIG` (base64-encoded kubeconfig), `TURNSTILE_SECRET`, `DB_URL`.

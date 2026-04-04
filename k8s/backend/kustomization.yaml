@@ -7,5 +7,5 @@ resources:
   - ingress.yaml
 
 images:
-  - name: ghcr.io/platafyi/0
+  - name: ghcr.io/platafyi/api
     newTag: PLACEHOLDER
