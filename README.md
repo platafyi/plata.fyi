@@ -1,6 +1,11 @@
 # plata.fyi
 
-Anonymous salary sharing for Macedonian workers. No accounts, no passwords, no email — fill out a form, pass a Cloudflare Turnstile check, get a session token stored in your browser. All data is public and anonymous.
+[![Deploy](https://github.com/platafyi/plata.fyi/actions/workflows/deploy.yml/badge.svg)](https://github.com/platafyi/plata.fyi/actions/workflows/deploy.yml)
+[![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go&logoColor=white)](https://go.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Anonymous salary sharing for Macedonian workers. No accounts, no passwords, no email — fill out a form, pass a Cloudflare 
+Turnstile check, get a session token stored in your browser. All data is public and anonymous.
 
 Every deployment automatically publishes a full CSV snapshot of all salary data as a [GitHub Release](../../releases). Free to download and use.
 
@@ -96,9 +101,9 @@ In production, migrations are applied automatically by the deploy pipeline befor
 ## Contributing
 
 1. **Clone** the repo and create a branch from `main`.
-2. **Set up locally** — follow the [Local development](#local-development) steps above.
-3. **Make your changes** — keep PRs focused; one concern per PR.
-4. **Run tests** — backend tests are required to pass before opening a PR:
+2. **Set up locally.** Follow the [Local development](#local-development) steps above.
+3. **Make your changes.** Keep PRs focused; one concern per PR.
+4. **Run tests** before opening a PR:
    ```bash
    cd backend && go test -race ./internal/...
    cd frontend && npm run lint
@@ -107,9 +112,9 @@ In production, migrations are applied automatically by the deploy pipeline befor
 
 A few things to keep in mind:
 
-- **Tests required** — all backend changes must include tests. PRs that break existing tests or add untested logic will not be merged.
-- **Backwards compatibility** — the API and database schema must remain backwards compatible. Do not rename or remove existing fields; add new optional ones instead.
-- No personally identifiable information should ever be stored or logged — anonymity is a core invariant.
+- Please include tests for backend changes. Existing tests should keep passing.
+- Keep the API and database schema backwards compatible. Add new optional fields rather than renaming or removing existing ones.
+- No personally identifiable information should ever be stored or logged. Anonymity is a core invariant.
 - New database columns require a numbered migration file; never modify existing migration files.
 - **A little copying is better than a little dependency** ([why](https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s)). 
 If you do add one, run `go mod tidy && go mod vendor`.
@@ -121,10 +126,12 @@ If you do add one, run `go mod tidy && go mod vendor`.
 
 Deployment is fully automated via [GitHub Actions](.github/workflows/deploy.yml). Every push to `main`:
 
-1. **Builds** Docker images for the API and frontend and pushes them to GitHub Container Registry (`ghcr.io/platafyi/api`, `ghcr.io/platafyi/frontend`) tagged with the commit SHA.
+1. **Builds** Docker images for the API and frontend and pushes them to GitHub Container Registry (`ghcr.io/platafyi/api`, `ghcr.io/platafyi/frontend`) 
+tagged with the commit SHA.
 2. **Backs up** the live database by exporting an anonymous CSV snapshot and publishing it as a GitHub Release.
 3. **Deploys** by applying Kubernetes manifests via `kubectl apply -k k8s/` and waiting for the rollout to complete.
 
-Manifests are in `k8s/` (managed with Kustomize). The deploy job patches the image tag to the current commit SHA before applying, so each deploy is pinned to an exact build.
+Manifests are in `k8s/` (managed with Kustomize). The deploy job patches the image tag to the current commit SHA before applying, 
+so each deploy is pinned to an exact build.
 
 Required GitHub secrets: `KUBECONFIG` (base64-encoded kubeconfig), `TURNSTILE_SECRET`, `DB_URL`.
