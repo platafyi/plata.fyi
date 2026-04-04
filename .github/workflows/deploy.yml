@@ -12,8 +12,23 @@ env:
   FRONTEND_IMAGE: ghcr.io/platafyi/frontend
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+
+      - name: Run tests
+        run: cd backend && go test -race ./internal/...
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: test
     permissions:
       contents: read
       packages: write
