@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: platafyi-frontend
+  namespace: platafyi
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: plata.fyi
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: platafyi-frontend
+                port:
+                  number: 80
+    - host: www.plata.fyi
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: platafyi-frontend
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - plata.fyi
+        - www.plata.fyi
+      secretName: plata-fyi-tls

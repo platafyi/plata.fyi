@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platafyi-api
+  namespace: platafyi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: platafyi-api
+  template:
+    metadata:
+      labels:
+        app: platafyi-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/platafyi/0:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: DB_URL
+            - name: RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: RESEND_API_KEY
+            - name: APP_URL
+              value: "https://plata.fyi"
+            - name: PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
