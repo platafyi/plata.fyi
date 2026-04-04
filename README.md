@@ -111,8 +111,9 @@ A few things to keep in mind:
 - **Backwards compatibility** — the API and database schema must remain backwards compatible. Do not rename or remove existing fields; add new optional ones instead.
 - No personally identifiable information should ever be stored or logged — anonymity is a core invariant.
 - New database columns require a numbered migration file; never modify existing migration files.
-- The project targets Go 1.26+ and Next.js 14. Avoid adding dependencies unless necessary.
-- The backend uses vendoring. Run `go mod tidy && go mod vendor` after adding or updating dependencies.
+- **A little copying is better than a little dependency** ([why](https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s)). 
+If you do add one, run `go mod tidy && go mod vendor`.
+- The project targets Go 1.26+ and Next.js 14.
 
 ---
 
