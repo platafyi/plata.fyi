@@ -39,4 +39,4 @@ Thumbs.db
 # Kubernetes secrets (never commit)
 conf/k8s/api/secret.yaml
 conf/k8s/postgres/secret.yaml
-k8s/**/secret.yaml
+k8s/postgres/secret.yaml
