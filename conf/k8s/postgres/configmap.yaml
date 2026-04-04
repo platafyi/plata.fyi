@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: platafyi
+data:
+  POSTGRES_DB: platafyi
+  POSTGRES_USER: platafyi

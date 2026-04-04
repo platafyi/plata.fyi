@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: platafyi-migrate
+  namespace: platafyi
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-postgres
+          image: alpine:3.19
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache netcat-openbsd
+              until nc -z postgres 5432; do
+                echo "waiting for postgres..."
+                sleep 2
+              done
+              echo "postgres is ready"
+      containers:
+        - name: migrate
+          image: ghcr.io/platafyi/0:latest
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: DB_URL
