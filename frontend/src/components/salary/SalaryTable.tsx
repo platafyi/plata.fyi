@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { SalarySubmission } from "@/types";
 import { ARRANGEMENT_LABEL, SENIORITY_LABEL } from "@/lib/constants";
+import { BrutoInfo } from "@/components/salary/BrutoInfo";
 
 interface Props {
   submissions: SalarySubmission[];
@@ -114,7 +115,10 @@ export default function SalaryTable({ submissions, total, page, pageSize, onPage
                   </td>
                   <td className="px-4 py-3 font-medium opacity-60 text-sm">{s.years_experience} год.</td>
                   <td className="px-4 py-3 text-right">
-                    <span className="font-black text-ink text-lg" style={{ backgroundColor: "#fe91e6", padding: "2px 8px", borderRadius: "4px" }}>{formatMKD(s.base_salary)}</span>
+                    <span className="inline-flex items-center justify-end">
+                      <span className="font-black text-ink text-lg" style={{ backgroundColor: "#fe91e6", padding: "2px 8px", borderRadius: "4px" }}>{formatMKD(s.base_salary)}</span>
+                      <BrutoInfo neto={s.base_salary} />
+                    </span>
                     {s.bonuses && s.bonuses.length > 0 && (
                       <span className="block text-xs font-semibold opacity-40 mt-1">+ бонус</span>
                     )}
