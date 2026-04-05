@@ -106,7 +106,7 @@ func TestGetByID(t *testing.T) {
 
 // TestSalariesOrderNotByCreatedAt verifies that the handler returns results in
 // exactly the order the store provides, not re-sorted by created_at.
-// Ordering is delegated to the store (ORDER BY random() in PostgresStore),
+// Ordering is delegated to the store (ORDER BY ctid DESC in PostgresStore),
 // so the handler must never impose its own date-based sort.
 func TestSalariesOrderNotByCreatedAt(t *testing.T) {
 	older := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)

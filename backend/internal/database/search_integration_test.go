@@ -35,11 +35,10 @@ func testStore(t *testing.T) database.Store {
 	return database.NewPostgresStore(testRawDB(t))
 }
 
-// TestSearchSalariesIsRandom inserts 10 submissions then calls SearchSalaries
-// 20 times. It asserts that at least two calls return a different order
-// proving the query uses ORDER BY random(), not ORDER BY created_at or any
-// other deterministic column.
-func TestSearchSalariesIsRandom(t *testing.T) {
+// TestSearchSalariesLatestFirst inserts 10 submissions then verifies that
+// SearchSalaries returns them in a stable, consistent order (ORDER BY ctid DESC),
+// and that the last inserted submission appears first.
+func TestSearchSalariesLatestFirst(t *testing.T) {
 	store := testStore(t)
 	ctx := context.Background()
 
@@ -82,19 +81,24 @@ func TestSearchSalariesIsRandom(t *testing.T) {
 		createdIDs = append(createdIDs, sub.ID)
 	}
 
+	lastInsertedID := createdIDs[len(createdIDs)-1]
+
 	firstOrder := salaryIDs(t, store, ctx)
 	if len(firstOrder) < 10 {
 		t.Fatalf("expected at least 10 results, got %d", len(firstOrder))
 	}
 
-	const attempts = 20
-	for i := 0; i < attempts; i++ {
+	// Order must be stable across calls.
+	for i := 0; i < 5; i++ {
 		if !sameOrder(firstOrder, salaryIDs(t, store, ctx)) {
-			return // different order observed, ORDER BY random() confirmed
+			t.Errorf("SearchSalaries returned a different order on call %d — expected stable ctid ordering", i+1)
 		}
 	}
 
-	t.Errorf("SearchSalaries returned the same order all %d times, not using ORDER BY random()", attempts)
+	// The last inserted row must appear first (highest ctid).
+	if firstOrder[0] != lastInsertedID {
+		t.Errorf("expected last inserted submission %s to be first in results, got %s", lastInsertedID, firstOrder[0])
+	}
 }
 
 func salaryIDs(t *testing.T, store database.Store, ctx context.Context) []string {

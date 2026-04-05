@@ -482,7 +482,7 @@ func (s *PostgresStore) SearchSalaries(ctx context.Context, f SearchFilters) ([]
 		 JOIN industries i ON i.id = s.industry_id
 		 JOIN cities c ON c.id = s.city_id
 		 WHERE %s
-		 ORDER BY s.id
+		 ORDER BY s.ctid DESC
 		 LIMIT $%d OFFSET $%d`, whereSQL, argN, argN+1),
 		args...,
 	)
