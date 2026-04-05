@@ -114,6 +114,28 @@ func salaryIDs(t *testing.T, store database.Store, ctx context.Context) []string
 	return ids
 }
 
+// TestSubmissionTimestampPrecision verifies that created_at and updated_at are
+// stored as TIMESTAMPTZ, not DATE. Checks the schema directly to avoid non deterministic test.
+func TestSubmissionTimestampPrecision(t *testing.T) {
+	db := testRawDB(t)
+	ctx := context.Background()
+
+	for _, col := range []string{"created_at", "updated_at"} {
+		var dataType string
+		err := db.QueryRowContext(ctx,
+			`SELECT data_type FROM information_schema.columns
+			 WHERE table_name = 'salary_submissions' AND column_name = $1`,
+			col,
+		).Scan(&dataType)
+		if err != nil {
+			t.Fatalf("query column type for %s: %v", col, err)
+		}
+		if dataType != "timestamp with time zone" {
+			t.Errorf("column %s type = %q, want 'timestamp with time zone' — run migration 018", col, dataType)
+		}
+	}
+}
+
 func sameOrder(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

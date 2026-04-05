@@ -229,7 +229,7 @@ func (s *PostgresStore) GetSubmissionsByOwner(ctx context.Context, ownerID strin
 		 JOIN industries i ON i.id = s.industry_id
 		 JOIN cities c ON c.id = s.city_id
 		 WHERE s.owner_id = $1::uuid
-		 ORDER BY s.created_at DESC`,
+		 ORDER BY s.created_at DESC, s.ctid DESC`,
 		ownerID,
 	)
 	if err != nil {
@@ -482,7 +482,7 @@ func (s *PostgresStore) SearchSalaries(ctx context.Context, f SearchFilters) ([]
 		 JOIN industries i ON i.id = s.industry_id
 		 JOIN cities c ON c.id = s.city_id
 		 WHERE %s
-		 ORDER BY s.ctid DESC
+		 ORDER BY s.created_at DESC, s.ctid DESC
 		 LIMIT $%d OFFSET $%d`, whereSQL, argN, argN+1),
 		args...,
 	)
