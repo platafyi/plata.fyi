@@ -27,9 +27,14 @@ export default function FilterBar({ industries, cities, lockedCity, lockedIndust
         params.delete("city");
         const qs = params.toString();
         if (value) {
-          router.push(`/city/${value}${qs ? `?${qs}` : ""}`);
+          if (lockedIndustry) {
+            params.set("city", value);
+            router.push(`${pathname}?${params.toString()}`);
+          } else {
+            router.push(`/city/${value}${qs ? `?${qs}` : ""}`);
+          }
         } else {
-          router.push(`/${qs ? `?${qs}` : ""}`);
+          router.push(lockedIndustry ? `${pathname}${qs ? `?${qs}` : ""}` : `/${qs ? `?${qs}` : ""}`);
         }
         return;
       }
@@ -38,9 +43,14 @@ export default function FilterBar({ industries, cities, lockedCity, lockedIndust
         params.delete("industry");
         const qs = params.toString();
         if (value) {
-          router.push(`/industry/${value}${qs ? `?${qs}` : ""}`);
+          if (lockedCity) {
+            params.set("industry", value);
+            router.push(`${pathname}?${params.toString()}`);
+          } else {
+            router.push(`/industry/${value}${qs ? `?${qs}` : ""}`);
+          }
         } else {
-          router.push(`/${qs ? `?${qs}` : ""}`);
+          router.push(lockedCity ? `${pathname}${qs ? `?${qs}` : ""}` : `/${qs ? `?${qs}` : ""}`);
         }
         return;
       }

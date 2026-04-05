@@ -77,12 +77,26 @@ export default function SalaryTable({ submissions, total, page, pageSize, onPage
                     <div className="text-sm font-medium opacity-50 mt-0.5">{s.job_title}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={(e) => { e.stopPropagation(); router.push(`/industry/${s.industry_slug}`); }} className="tag tag-white" style={{ cursor: "pointer" }}>
+                    <button onClick={(e) => {
+                      e.stopPropagation();
+                      if (pathname.startsWith("/city/")) {
+                        filterBy("industry", s.industry_slug);
+                      } else {
+                        router.push(`/industry/${s.industry_slug}`);
+                      }
+                    }} className="tag tag-white" style={{ cursor: "pointer" }}>
                       {s.industry_name}
                     </button>
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={(e) => { e.stopPropagation(); router.push(`/city/${s.city_slug}`); }} className="tag tag-white" style={{ cursor: "pointer" }}>
+                    <button onClick={(e) => {
+                      e.stopPropagation();
+                      if (pathname.startsWith("/industry/")) {
+                        filterBy("city", s.city_slug);
+                      } else {
+                        router.push(`/city/${s.city_slug}`);
+                      }
+                    }} className="tag tag-white" style={{ cursor: "pointer" }}>
                       {s.city_name}
                     </button>
                   </td>
