@@ -5,6 +5,9 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
           <div className="flex items-center gap-3 font-semibold text-ink opacity-60">
             <p>© {new Date().getFullYear()} Plata.fyi, Сите податоци се анонимни</p>
+            {process.env.NEXT_PUBLIC_APP_VERSION && process.env.NEXT_PUBLIC_APP_VERSION !== 'dev' && (
+              <span className="opacity-40 text-xs">{process.env.NEXT_PUBLIC_APP_VERSION}</span>
+            )}
             <a
               href="https://github.com/platafyi/plata.fyi"
               target="_blank"
