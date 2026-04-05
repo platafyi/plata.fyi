@@ -16,7 +16,7 @@ export default function SubmitPage() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [pendingData, setPendingData] = useState<SubmissionInput | null>(null);
 
-  const handleFormSubmit = (data: SubmissionInput) => {
+  const handleFormSubmit = async (data: SubmissionInput) => {
     setPendingData(data);
   };
 
