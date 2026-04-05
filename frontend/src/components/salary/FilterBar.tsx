@@ -85,14 +85,14 @@ export default function FilterBar({ industries, cities, lockedCity, lockedIndust
           value={lockedIndustry || searchParams.get("industry") || ""}
           onChange={(v) => updateFilter("industry", String(v))}
           options={industries.map((i) => ({ value: i.slug, label: i.name }))}
-          placeholder="Сите индустрии"
+          placeholder="Индустрија"
           accentColor="#e7fe05"
         />
         <Select
           value={lockedCity || searchParams.get("city") || ""}
           onChange={(v) => updateFilter("city", String(v))}
           options={cities.map((c) => ({ value: c.slug, label: c.name }))}
-          placeholder="Сите градови"
+          placeholder="Град"
           accentColor="#f6cb44"
         />
         <Select

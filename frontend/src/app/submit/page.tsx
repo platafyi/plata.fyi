@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Turnstile } from "@marsidev/react-turnstile";
 import SubmissionForm from "@/components/submission/SubmissionForm";
+import SubmitConfirmModal from "@/components/submission/SubmitConfirmModal";
 import { createSubmission, storeSession } from "@/lib/api";
 import type { SubmissionInput } from "@/types";
 
@@ -13,16 +14,30 @@ const TURNSTILE_SITE_KEY =
 export default function SubmitPage() {
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [pendingData, setPendingData] = useState<SubmissionInput | null>(null);
 
-  const handleSubmit = async (data: SubmissionInput) => {
-    const result = await createSubmission(null, data, turnstileToken ?? undefined);
+  const handleFormSubmit = (data: SubmissionInput) => {
+    setPendingData(data);
+  };
+
+  const handleConfirm = async () => {
+    if (!pendingData) return;
+    const result = await createSubmission(null, pendingData, turnstileToken ?? undefined);
     if (result.session_token) {
       storeSession(result.session_token);
     }
     router.replace("/manage");
   };
 
+  const handleCancel = () => {
+    setPendingData(null);
+  };
+
   return (
+    <>
+    {pendingData && (
+      <SubmitConfirmModal onConfirm={handleConfirm} onCancel={handleCancel} />
+    )}
     <div className="max-w-2xl mx-auto py-4">
       <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-ink mb-2">
         Споделете плата
@@ -32,7 +47,7 @@ export default function SubmitPage() {
       </p>
 
       <div className="card-lg">
-        <SubmissionForm onSubmit={handleSubmit} />
+        <SubmissionForm onSubmit={handleFormSubmit} />
       </div>
 
       <div className="mt-4 flex justify-center">
@@ -56,5 +71,6 @@ export default function SubmitPage() {
         </a>
       </div>
     </div>
+    </>
   );
 }
