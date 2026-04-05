@@ -55,7 +55,15 @@ export default function PrivacyPage() {
         <p className="text-base opacity-70 leading-relaxed">
           Сите записи за плата се јавно достапни и анонимни. Немаме
           можност да утврдиме кој ги внел одредени податоци врз основа на
-          јавно достапните информации.
+          јавно достапните информации. Кодот е отворен.{" "}
+          <a
+            href="https://github.com/platafyi/plata.fyi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:opacity-100 transition-opacity"
+          >
+            github.com/platafyi/plata.fyi
+          </a>
         </p>
       </section>
 
