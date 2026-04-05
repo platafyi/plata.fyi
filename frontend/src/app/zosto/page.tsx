@@ -109,6 +109,17 @@ export default function ZostoPage() {
         <p className="text-base opacity-70 leading-relaxed">
           Платформата постои како јавен, слободен ресурс за сите кои сакаат да знаат каде стојат.
         </p>
+        <p className="text-base opacity-70 leading-relaxed">
+          Кодот е отворен.{" "}
+          <a
+            href="https://github.com/platafyi/plata.fyi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:opacity-100 transition-opacity"
+          >
+            github.com/platafyi/plata.fyi
+          </a>
+        </p>
         <ShareButton />
       </section>
     </div>
