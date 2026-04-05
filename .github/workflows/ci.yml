@@ -17,7 +17,7 @@ jobs:
           go-version-file: backend/go.mod
 
       - name: Run tests
-        run: cd backend && go test -race ./internal/...
+        run: cd backend && go test -mod=vendor -race ./internal/...
 
   frontend:
     name: TypeScript typecheck
