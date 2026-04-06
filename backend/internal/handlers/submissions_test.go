@@ -32,6 +32,56 @@ func authStore(ownerID string) *MockStore {
 	return &MockStore{OwnerByToken: &ownerID}
 }
 
+func TestValidateRequestSalaryBounds(t *testing.T) {
+	h := NewSubmissionsHandler(&MockStore{}, "")
+
+	baseReq := func(employmentType string, salary int) *submissionRequest {
+		return &submissionRequest{
+			CompanyName:     "Test Co",
+			JobTitle:        "Engineer",
+			IndustryID:      1,
+			CityID:          1,
+			Seniority:       "mid",
+			WorkArrangement: "office",
+			EmploymentType:  employmentType,
+			BaseSalary:      salary,
+			SalaryYear:      2025,
+		}
+	}
+
+	cases := []struct {
+		name    string
+		req     *submissionRequest
+		wantErr bool
+	}{
+		// full_time: minimum wage applies
+		{"full_time zero", baseReq("full_time", 0), true},
+		{"full_time below min", baseReq("full_time", minSalaryMKD-1), true},
+		{"full_time at min", baseReq("full_time", minSalaryMKD), false},
+		{"full_time typical", baseReq("full_time", 55_000), false},
+		{"full_time at max", baseReq("full_time", maxSalaryMKD), false},
+		{"full_time above max", baseReq("full_time", maxSalaryMKD+1), true},
+		// part_time: no minimum wage floor, only max wage
+		{"part_time zero", baseReq("part_time", 0), true},
+		{"part_time below full_time min", baseReq("part_time", minSalaryMKD-1), false},
+		{"part_time typical", baseReq("part_time", 15_000), false},
+		{"part_time at max", baseReq("part_time", maxSalaryMKD), false},
+		{"part_time above max", baseReq("part_time", maxSalaryMKD+1), true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := h.validateRequest(tc.req)
+			if tc.wantErr && got == "" {
+				t.Errorf("expected validation error but got none")
+			}
+			if !tc.wantErr && got != "" {
+				t.Errorf("expected no error but got %q", got)
+			}
+		})
+	}
+}
+
 func TestList(t *testing.T) {
 	ownerID := "owner-uuid"
 

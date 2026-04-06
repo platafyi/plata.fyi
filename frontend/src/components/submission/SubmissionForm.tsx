@@ -16,6 +16,9 @@ interface Props {
   onCancel?: () => void;
 }
 
+const MIN_SALARY_MKD = 26_046; // minimum wage MK 2026
+const MAX_SALARY_MKD = 2_000_000;
+
 const ARRANGEMENT_COLORS: Record<string, string> = {
   office:  "#e7fe05",
   hybrid:  "#fe91e6",
@@ -37,6 +40,7 @@ export default function SubmissionForm({ initial, onSubmit, onCancel }: Props) {
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [salaryError, setSalaryError] = useState<string | null>(null);
 
   const [companyName, setCompanyName] = useState(initial?.company_name || "");
   const [companyRegNo, setCompanyRegNo] = useState(initial?.company_reg_no || "");
@@ -77,7 +81,14 @@ export default function SubmissionForm({ initial, onSubmit, onCancel }: Props) {
     if (!cityId) return setError("Изберете град");
     if (!seniority) return setError("Изберете ниво на искуство");
     if (!workArrangement) return setError("Изберете начин на работа");
-    if (!baseSalary || baseSalary <= 0) return setError("Внесете плата");
+    const effectiveMin = employmentType === "part_time" ? 1 : MIN_SALARY_MKD;
+    if (!baseSalary || baseSalary < effectiveMin || baseSalary > MAX_SALARY_MKD) {
+      setSalaryError(employmentType === "part_time"
+        ? `Платата мора да биде помеѓу 1 и ${MAX_SALARY_MKD.toLocaleString("mk-MK")} МКД`
+        : `Платата мора да биде помеѓу ${MIN_SALARY_MKD.toLocaleString("mk-MK")} и ${MAX_SALARY_MKD.toLocaleString("mk-MK")} МКД`
+      );
+      return setError("Внесете валидна плата");
+    }
 
     const invalidBonus = bonuses.find((b) => !b.amount || b.amount <= 0);
     if (invalidBonus) return setError("Сите бонуси мора да имаат позитивен износ");
@@ -314,12 +325,27 @@ export default function SubmissionForm({ initial, onSubmit, onCancel }: Props) {
         <input
           type="number"
           value={baseSalary || ""}
-          onChange={(e) => setBaseSalary(parseInt(e.target.value) || 0)}
+          onChange={(e) => { setBaseSalary(parseInt(e.target.value) || 0); setSalaryError(null); }}
+          onBlur={() => {
+            const effectiveMin = employmentType === "part_time" ? 1 : MIN_SALARY_MKD;
+            if (baseSalary && (baseSalary < effectiveMin || baseSalary > MAX_SALARY_MKD)) {
+              setSalaryError(employmentType === "part_time"
+                ? `Платата мора да биде помеѓу 1 и ${MAX_SALARY_MKD.toLocaleString("mk-MK")} МКД`
+                : `Платата мора да биде помеѓу ${MIN_SALARY_MKD.toLocaleString("mk-MK")} и ${MAX_SALARY_MKD.toLocaleString("mk-MK")} МКД`
+              );
+            } else {
+              setSalaryError(null);
+            }
+          }}
           placeholder="пр. 55000"
-          min="1"
+          min={MIN_SALARY_MKD}
+          max={MAX_SALARY_MKD}
           className="input"
           required
         />
+        {salaryError && (
+          <p className="text-xs font-semibold text-red-600 mt-1">{salaryError}</p>
+        )}
       </div>
 
       {/* Salary year */}

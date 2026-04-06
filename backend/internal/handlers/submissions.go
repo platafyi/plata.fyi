@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -46,6 +47,9 @@ var validBonusTypes = map[string]bool{
 var validFrequencies = map[string]bool{
 	"monthly": true, "quarterly": true, "annual": true, "one_time": true,
 }
+
+const minSalaryMKD = 26_046 // minimum wage MK 2026
+const maxSalaryMKD = 2_000_000
 
 type submissionRequest struct {
 	CompanyName     string         `json:"company_name"`
@@ -109,8 +113,12 @@ func (h *SubmissionsHandler) validateRequest(req *submissionRequest) string {
 	if req.EmploymentType == "full_time" {
 		req.HoursPerWeek = nil
 	}
-	if req.BaseSalary <= 0 {
-		return "Основната плата мора да биде позитивна"
+	effectiveMin := minSalaryMKD
+	if req.EmploymentType == "part_time" {
+		effectiveMin = 1
+	}
+	if req.BaseSalary < effectiveMin || req.BaseSalary > maxSalaryMKD {
+		return "Платата мора да биде помеѓу 26.046 и 2.000.000 МКД"
 	}
 	currentYear := time.Now().Year()
 	if req.SalaryYear == 0 {
@@ -310,7 +318,7 @@ func (h *SubmissionsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		SalaryYear:      req.SalaryYear,
 		Bonuses:         bonuses,
 	})
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		jsonError(w, "Не е пронајдено или немате право да го уредите", http.StatusNotFound)
 		return
 	}
@@ -336,7 +344,7 @@ func (h *SubmissionsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := h.store.DeleteSubmission(r.Context(), id, ownerID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		jsonError(w, "Не е пронајдено или немате право да го избришете", http.StatusNotFound)
 		return
 	}
