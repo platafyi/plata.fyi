@@ -32,6 +32,7 @@ type SalarySubmission struct {
 	YearsExperience int            `json:"years_experience"`
 	WorkArrangement string         `json:"work_arrangement"`
 	EmploymentType  string         `json:"employment_type"`
+	CompanyType     *string        `json:"company_type,omitempty"`
 	HoursPerWeek    *int           `json:"hours_per_week,omitempty"`
 	BaseSalary      int            `json:"base_salary"`
 	SalaryYear      int            `json:"salary_year"`
@@ -74,6 +75,7 @@ type SearchFilters struct {
 	WorkArrangement string
 	MinSalary       int
 	MaxSalary       int
+	CompanyType     string
 	Page            int
 	PageSize        int
 }

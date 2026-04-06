@@ -48,6 +48,10 @@ var validFrequencies = map[string]bool{
 	"monthly": true, "quarterly": true, "annual": true, "one_time": true,
 }
 
+var validCompanyTypes = map[string]bool{
+	"domestic": true, "foreign": true,
+}
+
 const minSalaryMKD = 26_046 // minimum wage MK 2026
 const maxSalaryMKD = 2_000_000
 
@@ -65,6 +69,7 @@ type submissionRequest struct {
 	HoursPerWeek    *int           `json:"hours_per_week"`
 	BaseSalary      int            `json:"base_salary"`
 	SalaryYear      int            `json:"salary_year"`
+	CompanyType     string         `json:"company_type"`
 	Bonuses         []bonusRequest `json:"bonuses"`
 	TurnstileToken  string         `json:"turnstile_token"`
 }
@@ -119,6 +124,12 @@ func (h *SubmissionsHandler) validateRequest(req *submissionRequest) string {
 	}
 	if req.BaseSalary < effectiveMin || req.BaseSalary > maxSalaryMKD {
 		return "Платата мора да биде помеѓу 26.046 и 2.000.000 МКД"
+	}
+	if req.CompanyType == "" {
+		req.CompanyType = "domestic"
+	}
+	if !validCompanyTypes[req.CompanyType] {
+		return "Невалиден тип на компанија"
 	}
 	currentYear := time.Now().Year()
 	if req.SalaryYear == 0 {
@@ -251,6 +262,7 @@ func (h *SubmissionsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		HoursPerWeek:    req.HoursPerWeek,
 		BaseSalary:      req.BaseSalary,
 		SalaryYear:      req.SalaryYear,
+		CompanyType:     req.CompanyType,
 		Bonuses:         bonuses,
 	})
 	if err != nil {
@@ -316,6 +328,7 @@ func (h *SubmissionsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		HoursPerWeek:    req.HoursPerWeek,
 		BaseSalary:      req.BaseSalary,
 		SalaryYear:      req.SalaryYear,
+		CompanyType:     req.CompanyType,
 		Bonuses:         bonuses,
 	})
 	if errors.Is(err, sql.ErrNoRows) {

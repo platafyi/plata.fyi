@@ -137,6 +137,7 @@ type CreateSubmissionInput struct {
 	HoursPerWeek    *int
 	BaseSalary      int
 	SalaryYear      int
+	CompanyType     string
 	Bonuses         []BonusInput
 }
 
@@ -165,17 +166,21 @@ func (s *PostgresStore) CreateSubmission(ctx context.Context, inp CreateSubmissi
 	if employmentType == "" {
 		employmentType = "full_time"
 	}
+	var companyType interface{}
+	if inp.CompanyType != "" {
+		companyType = inp.CompanyType
+	}
 	err = tx.QueryRowContext(ctx,
 		`INSERT INTO salary_submissions
 		 (owner_id, company_name, company_reg_no, job_title, industry_id, city_id,
 		  seniority, years_at_company, years_experience, work_arrangement,
-		  employment_type, hours_per_week, base_salary, salary_year)
-		 VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+		  employment_type, hours_per_week, base_salary, salary_year, company_type)
+		 VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
 		 RETURNING id, created_at, updated_at`,
 		inp.OwnerID, inp.CompanyName, regNo, inp.JobTitle,
 		inp.IndustryID, inp.CityID, inp.Seniority,
 		inp.YearsAtCompany, inp.YearsExperience, inp.WorkArrangement,
-		employmentType, inp.HoursPerWeek, inp.BaseSalary, inp.SalaryYear,
+		employmentType, inp.HoursPerWeek, inp.BaseSalary, inp.SalaryYear, companyType,
 	).Scan(&sub.ID, &sub.CreatedAt, &sub.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("insert submission: %w", err)
@@ -212,6 +217,9 @@ func (s *PostgresStore) CreateSubmission(ctx context.Context, inp CreateSubmissi
 	sub.HoursPerWeek = inp.HoursPerWeek
 	sub.BaseSalary = inp.BaseSalary
 	sub.SalaryYear = inp.SalaryYear
+	if inp.CompanyType != "" {
+		sub.CompanyType = &inp.CompanyType
+	}
 	sub.IsApproved = true
 
 	return &sub, nil
@@ -224,7 +232,8 @@ func (s *PostgresStore) GetSubmissionsByOwner(ctx context.Context, ownerID strin
 		        s.industry_id, i.name, i.slug, s.city_id, c.name, c.slug,
 		        s.seniority, s.years_at_company, s.years_experience,
 		        s.work_arrangement, s.employment_type, s.hours_per_week,
-		        s.base_salary, s.salary_year, s.is_approved, s.created_at, s.updated_at
+		        s.base_salary, s.salary_year, s.is_approved, s.created_at, s.updated_at,
+		        s.company_type
 		 FROM salary_submissions s
 		 JOIN industries i ON i.id = s.industry_id
 		 JOIN cities c ON c.id = s.city_id
@@ -240,7 +249,7 @@ func (s *PostgresStore) GetSubmissionsByOwner(ctx context.Context, ownerID strin
 	var out []SalarySubmission
 	for rows.Next() {
 		var sub SalarySubmission
-		var regNo sql.NullString
+		var regNo, companyType sql.NullString
 		err := rows.Scan(
 			&sub.ID, &sub.OwnerID, &sub.CompanyName, &regNo, &sub.JobTitle,
 			&sub.IndustryID, &sub.IndustryName, &sub.IndustrySlug,
@@ -248,11 +257,13 @@ func (s *PostgresStore) GetSubmissionsByOwner(ctx context.Context, ownerID strin
 			&sub.Seniority, &sub.YearsAtCompany, &sub.YearsExperience,
 			&sub.WorkArrangement, &sub.EmploymentType, &sub.HoursPerWeek,
 			&sub.BaseSalary, &sub.SalaryYear, &sub.IsApproved, &sub.CreatedAt, &sub.UpdatedAt,
+			&companyType,
 		)
 		if err != nil {
 			return nil, err
 		}
 		sub.CompanyRegNo = nullStringToPtr(regNo)
+		sub.CompanyType = nullStringToPtr(companyType)
 		out = append(out, sub)
 	}
 	if err := rows.Err(); err != nil {
@@ -273,13 +284,14 @@ func (s *PostgresStore) GetSubmissionsByOwner(ctx context.Context, ownerID strin
 // GetSubmissionByID returns a single submission with bonuses, or nil if not found.
 func (s *PostgresStore) GetSubmissionByID(ctx context.Context, id string) (*SalarySubmission, error) {
 	var sub SalarySubmission
-	var regNo sql.NullString
+	var regNo, companyType sql.NullString
 	err := s.db.QueryRowContext(ctx,
 		`SELECT s.id, s.owner_id, s.company_name, s.company_reg_no, s.job_title,
 		        s.industry_id, i.name, i.slug, s.city_id, c.name, c.slug,
 		        s.seniority, s.years_at_company, s.years_experience,
 		        s.work_arrangement, s.employment_type, s.hours_per_week,
-		        s.base_salary, s.salary_year, s.is_approved, s.created_at, s.updated_at
+		        s.base_salary, s.salary_year, s.is_approved, s.created_at, s.updated_at,
+		        s.company_type
 		 FROM salary_submissions s
 		 JOIN industries i ON i.id = s.industry_id
 		 JOIN cities c ON c.id = s.city_id
@@ -292,8 +304,10 @@ func (s *PostgresStore) GetSubmissionByID(ctx context.Context, id string) (*Sala
 		&sub.Seniority, &sub.YearsAtCompany, &sub.YearsExperience,
 		&sub.WorkArrangement, &sub.EmploymentType, &sub.HoursPerWeek,
 		&sub.BaseSalary, &sub.SalaryYear, &sub.IsApproved, &sub.CreatedAt, &sub.UpdatedAt,
+		&companyType,
 	)
 	sub.CompanyRegNo = nullStringToPtr(regNo)
+	sub.CompanyType = nullStringToPtr(companyType)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -326,15 +340,21 @@ func (s *PostgresStore) UpdateSubmission(ctx context.Context, id, ownerID string
 	if employmentType == "" {
 		employmentType = "full_time"
 	}
+	var companyType interface{}
+	if inp.CompanyType != "" {
+		companyType = inp.CompanyType
+	}
 	res, err := tx.ExecContext(ctx,
 		`UPDATE salary_submissions SET
 		  company_name=$1, company_reg_no=$2, job_title=$3, industry_id=$4, city_id=$5,
 		  seniority=$6, years_at_company=$7, years_experience=$8, work_arrangement=$9,
-		  employment_type=$10, hours_per_week=$11, base_salary=$12, salary_year=$13, updated_at=DATE_TRUNC('month', NOW())::DATE
-		 WHERE id=$14 AND owner_id=$15::uuid`,
+		  employment_type=$10, hours_per_week=$11, base_salary=$12, salary_year=$13,
+		  company_type=$14, updated_at=DATE_TRUNC('month', NOW())::DATE
+		 WHERE id=$15 AND owner_id=$16::uuid`,
 		inp.CompanyName, regNo, inp.JobTitle, inp.IndustryID, inp.CityID,
 		inp.Seniority, inp.YearsAtCompany, inp.YearsExperience, inp.WorkArrangement,
-		employmentType, inp.HoursPerWeek, inp.BaseSalary, inp.SalaryYear, id, ownerID,
+		employmentType, inp.HoursPerWeek, inp.BaseSalary, inp.SalaryYear,
+		companyType, id, ownerID,
 	)
 	if err != nil {
 		return fmt.Errorf("update submission: %w", err)
@@ -455,6 +475,11 @@ func (s *PostgresStore) SearchSalaries(ctx context.Context, f SearchFilters) ([]
 		where = append(where, fmt.Sprintf("s.base_salary <= $%d", argN))
 		argN++
 	}
+	if f.CompanyType != "" {
+		args = append(args, f.CompanyType)
+		where = append(where, fmt.Sprintf("s.company_type = $%d", argN))
+		argN++
+	}
 
 	whereSQL := strings.Join(where, " AND ")
 
@@ -477,7 +502,7 @@ func (s *PostgresStore) SearchSalaries(ctx context.Context, f SearchFilters) ([]
 		fmt.Sprintf(`SELECT s.id, s.company_name, s.job_title,
 		        s.industry_id, i.name, i.slug, s.city_id, c.name, c.slug,
 		        s.seniority, s.years_at_company, s.years_experience,
-		        s.work_arrangement, s.base_salary, s.created_at
+		        s.work_arrangement, s.base_salary, s.created_at, s.company_type
 		 FROM salary_submissions s
 		 JOIN industries i ON i.id = s.industry_id
 		 JOIN cities c ON c.id = s.city_id
@@ -494,16 +519,18 @@ func (s *PostgresStore) SearchSalaries(ctx context.Context, f SearchFilters) ([]
 	var out []SalarySubmission
 	for rows.Next() {
 		var sub SalarySubmission
+		var companyType sql.NullString
 		err := rows.Scan(
 			&sub.ID, &sub.CompanyName, &sub.JobTitle,
 			&sub.IndustryID, &sub.IndustryName, &sub.IndustrySlug,
 			&sub.CityID, &sub.CityName, &sub.CitySlug,
 			&sub.Seniority, &sub.YearsAtCompany, &sub.YearsExperience,
-			&sub.WorkArrangement, &sub.BaseSalary, &sub.CreatedAt,
+			&sub.WorkArrangement, &sub.BaseSalary, &sub.CreatedAt, &companyType,
 		)
 		if err != nil {
 			return nil, 0, err
 		}
+		sub.CompanyType = nullStringToPtr(companyType)
 		out = append(out, sub)
 	}
 	if err := rows.Err(); err != nil {
@@ -531,6 +558,11 @@ func (s *PostgresStore) GetSalaryStats(ctx context.Context, groupBy string, f Se
 	if f.Seniority != "" {
 		args = append(args, f.Seniority)
 		where = append(where, fmt.Sprintf("s.seniority = $%d", argN))
+		argN++
+	}
+	if f.CompanyType != "" {
+		args = append(args, f.CompanyType)
+		where = append(where, fmt.Sprintf("s.company_type = $%d", argN))
 		argN++
 	}
 

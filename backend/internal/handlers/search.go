@@ -25,6 +25,7 @@ func (h *SearchHandler) Salaries(w http.ResponseWriter, r *http.Request) {
 		WorkArrangement: q.Get("arrangement"),
 		MinSalary:       parseInt(q.Get("min_salary")),
 		MaxSalary:       parseInt(q.Get("max_salary")),
+		CompanyType:     q.Get("company_type"),
 		Page:            parseInt(q.Get("page")),
 		PageSize:        parseInt(q.Get("page_size")),
 	}
@@ -74,6 +75,7 @@ func (h *SearchHandler) Stats(w http.ResponseWriter, r *http.Request) {
 		IndustrySlug: q.Get("industry"),
 		CitySlug:     q.Get("city"),
 		Seniority:    q.Get("seniority"),
+		CompanyType:  q.Get("company_type"),
 	}
 
 	stats, err := h.store.GetSalaryStats(r.Context(), groupBy, f)

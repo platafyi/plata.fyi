@@ -35,6 +35,7 @@ export interface SalarySubmission {
   years_experience: number;
   work_arrangement: string;
   employment_type: string;
+  company_type?: string;
   hours_per_week?: number;
   base_salary: number;
   salary_year: number;
@@ -59,6 +60,7 @@ export interface SearchFilters {
   city?: string;
   seniority?: string;
   arrangement?: string;
+  company_type?: string;
   min_salary?: string;
   max_salary?: string;
   page?: string;
@@ -89,6 +91,7 @@ export interface SubmissionInput {
   years_experience: number;
   work_arrangement: string;
   employment_type: string;
+  company_type: string;
   hours_per_week?: number;
   base_salary: number;
   salary_year: number;

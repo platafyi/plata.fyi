@@ -51,6 +51,7 @@ export default function SubmissionForm({ initial, onSubmit, onCancel }: Props) {
   const [yearsAtCompany, setYearsAtCompany] = useState(initial?.years_at_company ?? 0);
   const [yearsExperience, setYearsExperience] = useState(initial?.years_experience ?? 0);
   const [workArrangement, setWorkArrangement] = useState(initial?.work_arrangement || "");
+  const [companyType, setCompanyType] = useState(initial?.company_type || "domestic");
   const [employmentType, setEmploymentType] = useState(initial?.employment_type || "full_time");
   const [hoursPerWeek, setHoursPerWeek] = useState(initial?.hours_per_week || 30);
   const [baseSalary, setBaseSalary] = useState(initial?.base_salary || 0);
@@ -106,6 +107,7 @@ export default function SubmissionForm({ initial, onSubmit, onCancel }: Props) {
         years_experience: yearsExperience,
         work_arrangement: workArrangement,
         employment_type: employmentType,
+        company_type: companyType,
         hours_per_week: employmentType === "part_time" ? hoursPerWeek : undefined,
         base_salary: baseSalary,
         salary_year: salaryYear,
@@ -129,6 +131,49 @@ export default function SubmissionForm({ initial, onSubmit, onCancel }: Props) {
           regNo={companyRegNo}
           onChange={(name, reg) => { setCompanyName(name); setCompanyRegNo(reg); }}
         />
+      </div>
+
+      {/* Company type */}
+      <div>
+        <label className="label block mb-2">Тип на компанија *</label>
+        <div className="flex gap-2">
+          {[
+            { value: "domestic", label: "Домашна" },
+            { value: "foreign",  label: "Странска" },
+          ].map((ct) => {
+            const active = companyType === ct.value;
+            return (
+              <button
+                key={ct.value}
+                type="button"
+                onClick={() => setCompanyType(ct.value)}
+                style={{
+                  flex: 1,
+                  backgroundColor: active ? "#93c5fd" : "#ffffff",
+                  border: "2px solid rgb(40,40,37)",
+                  borderRadius: "4px",
+                  boxShadow: active ? "none" : "3px 3px 0 0 rgb(40,40,37)",
+                  transform: active ? "translate(2px,2px)" : "none",
+                  padding: "10px 8px",
+                  fontFamily: "var(--font-jost), sans-serif",
+                  fontWeight: active ? 700 : 500,
+                  fontSize: "0.76rem",
+                  color: "rgb(40,40,37)",
+                  cursor: "pointer",
+                  transition: "all 80ms ease",
+                  textAlign: "center",
+                }}
+              >
+                {ct.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-sm opacity-50 mt-1.5">
+          {companyType === "foreign"
+            ? "Компанијата нема претставништво во МК"
+            : "Избери Домашна ако работиш за МК компанија или компанија со претставништво во МК"}
+        </p>
       </div>
 
       {/* Job title */}
