@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/platafyi/plata.fyi/internal/database"
 	"github.com/platafyi/plata.fyi/internal/middleware"
@@ -84,8 +85,17 @@ func (h *SubmissionsHandler) validateRequest(req *submissionRequest) string {
 	if strings.TrimSpace(req.CompanyName) == "" {
 		return "Името на компанијата е задолжително"
 	}
+	if utf8.RuneCountInString(strings.TrimSpace(req.CompanyName)) > 100 {
+		return "Името на компанијата е предолго (максимум 100 знаци)"
+	}
 	if strings.TrimSpace(req.JobTitle) == "" {
 		return "Работната позиција е задолжителна"
+	}
+	if utf8.RuneCountInString(strings.TrimSpace(req.JobTitle)) > 100 {
+		return "Работната позиција е предолга (максимум 100 знаци)"
+	}
+	if len(req.CompanyRegNo) > 20 {
+		return "Регистарскиот број е предолг (максимум 20 знаци)"
 	}
 	if req.IndustryID <= 0 {
 		return "Изберете индустрија"
@@ -96,11 +106,11 @@ func (h *SubmissionsHandler) validateRequest(req *submissionRequest) string {
 	if !validSeniorities[req.Seniority] {
 		return "Невалидно ниво на искуство"
 	}
-	if req.YearsAtCompany < 0 {
-		return "Годините во компанијата не можат да бидат негативни"
+	if req.YearsAtCompany < 0 || req.YearsAtCompany > 60 {
+		return "Годините во компанијата мора да бидат помеѓу 0 и 60"
 	}
-	if req.YearsExperience < 0 {
-		return "Годините искуство не можат да бидат негативни"
+	if req.YearsExperience < 0 || req.YearsExperience > 60 {
+		return "Годините искуство мора да бидат помеѓу 0 и 60"
 	}
 	if !validArrangements[req.WorkArrangement] {
 		return "Невалиден начин на работа"
@@ -138,6 +148,9 @@ func (h *SubmissionsHandler) validateRequest(req *submissionRequest) string {
 	if req.SalaryYear < 2000 || req.SalaryYear > currentYear {
 		return "Невалидна година на плата"
 	}
+	if len(req.Bonuses) > 10 {
+		return "Максималниот број на бонуси е 10"
+	}
 	for _, b := range req.Bonuses {
 		if !validBonusTypes[b.BonusType] {
 			return "Невалиден тип на бонус"
@@ -171,8 +184,14 @@ func (h *SubmissionsHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SubmissionsHandler) Create(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 	var req submissionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			jsonError(w, "Барањето е премногу големо", http.StatusRequestEntityTooLarge)
+			return
+		}
 		jsonError(w, "Невалидно тело на барањето", http.StatusBadRequest)
 		return
 	}
@@ -201,6 +220,7 @@ func (h *SubmissionsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 		remoteIP := middleware.RealIP(r)
 		if !h.createRL.Allow(remoteIP) {
+			w.Header().Set("Retry-After", "3600")
 			jsonError(w, "Премногу барања. Обидете се подоцна.", http.StatusTooManyRequests)
 			return
 		}
@@ -297,8 +317,14 @@ func (h *SubmissionsHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
 	var req submissionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			jsonError(w, "Барањето е премногу големо", http.StatusRequestEntityTooLarge)
+			return
+		}
 		jsonError(w, "Невалидно тело на барањето", http.StatusBadRequest)
 		return
 	}

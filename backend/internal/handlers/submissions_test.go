@@ -32,6 +32,148 @@ func authStore(ownerID string) *MockStore {
 	return &MockStore{OwnerByToken: &ownerID}
 }
 
+func TestValidateRequestStringLengths(t *testing.T) {
+	h := NewSubmissionsHandler(&MockStore{}, "")
+
+	base := func() *submissionRequest {
+		return &submissionRequest{
+			CompanyName: "Test Co", JobTitle: "Engineer",
+			IndustryID: 1, CityID: 1, Seniority: "mid",
+			WorkArrangement: "office", EmploymentType: "full_time",
+			BaseSalary: 50000, SalaryYear: 2025,
+		}
+	}
+
+	t.Run("company_name at limit (100 chars)", func(t *testing.T) {
+		r := base()
+		r.CompanyName = strings.Repeat("а", 100)
+		if got := h.validateRequest(r); got != "" {
+			t.Errorf("expected no error, got %q", got)
+		}
+	})
+	t.Run("company_name too long (101 chars)", func(t *testing.T) {
+		r := base()
+		r.CompanyName = strings.Repeat("а", 101)
+		if got := h.validateRequest(r); got == "" {
+			t.Error("expected error for company_name > 100 chars")
+		}
+	})
+	t.Run("job_title at limit (100 chars)", func(t *testing.T) {
+		r := base()
+		r.JobTitle = strings.Repeat("а", 100)
+		if got := h.validateRequest(r); got != "" {
+			t.Errorf("expected no error, got %q", got)
+		}
+	})
+	t.Run("job_title too long (101 chars)", func(t *testing.T) {
+		r := base()
+		r.JobTitle = strings.Repeat("а", 101)
+		if got := h.validateRequest(r); got == "" {
+			t.Error("expected error for job_title > 100 chars")
+		}
+	})
+	t.Run("company_reg_no at limit (20 chars)", func(t *testing.T) {
+		r := base()
+		r.CompanyRegNo = strings.Repeat("1", 20)
+		if got := h.validateRequest(r); got != "" {
+			t.Errorf("expected no error, got %q", got)
+		}
+	})
+	t.Run("company_reg_no too long (21 chars)", func(t *testing.T) {
+		r := base()
+		r.CompanyRegNo = strings.Repeat("1", 21)
+		if got := h.validateRequest(r); got == "" {
+			t.Error("expected error for company_reg_no > 20 chars")
+		}
+	})
+}
+
+func TestValidateRequestYearsBounds(t *testing.T) {
+	h := NewSubmissionsHandler(&MockStore{}, "")
+
+	base := func() *submissionRequest {
+		return &submissionRequest{
+			CompanyName: "Test Co", JobTitle: "Engineer",
+			IndustryID: 1, CityID: 1, Seniority: "mid",
+			WorkArrangement: "office", EmploymentType: "full_time",
+			BaseSalary: 50000, SalaryYear: 2025,
+		}
+	}
+
+	cases := []struct {
+		name    string
+		modify  func(r *submissionRequest)
+		wantErr bool
+	}{
+		{"years_at_company 0", func(r *submissionRequest) { r.YearsAtCompany = 0 }, false},
+		{"years_at_company 60", func(r *submissionRequest) { r.YearsAtCompany = 60 }, false},
+		{"years_at_company 61", func(r *submissionRequest) { r.YearsAtCompany = 61 }, true},
+		{"years_at_company 9999", func(r *submissionRequest) { r.YearsAtCompany = 9999 }, true},
+		{"years_at_company -1", func(r *submissionRequest) { r.YearsAtCompany = -1 }, true},
+		{"years_experience 0", func(r *submissionRequest) { r.YearsExperience = 0 }, false},
+		{"years_experience 60", func(r *submissionRequest) { r.YearsExperience = 60 }, false},
+		{"years_experience 61", func(r *submissionRequest) { r.YearsExperience = 61 }, true},
+		{"years_experience 9999", func(r *submissionRequest) { r.YearsExperience = 9999 }, true},
+		{"years_experience -1", func(r *submissionRequest) { r.YearsExperience = -1 }, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := base()
+			tc.modify(r)
+			got := h.validateRequest(r)
+			if tc.wantErr && got == "" {
+				t.Error("expected error but got none")
+			}
+			if !tc.wantErr && got != "" {
+				t.Errorf("expected no error but got %q", got)
+			}
+		})
+	}
+}
+
+func TestValidateRequestBonusCap(t *testing.T) {
+	h := NewSubmissionsHandler(&MockStore{}, "")
+
+	makeReq := func(n int) *submissionRequest {
+		bonuses := make([]bonusRequest, n)
+		for i := range bonuses {
+			bonuses[i] = bonusRequest{BonusType: "annual", Amount: 1000, Frequency: "annual"}
+		}
+		return &submissionRequest{
+			CompanyName: "Test Co", JobTitle: "Engineer",
+			IndustryID: 1, CityID: 1, Seniority: "mid",
+			WorkArrangement: "office", EmploymentType: "full_time",
+			BaseSalary: 50000, SalaryYear: 2025,
+			Bonuses: bonuses,
+		}
+	}
+
+	cases := []struct {
+		name    string
+		count   int
+		wantErr bool
+	}{
+		{"0 bonuses", 0, false},
+		{"1 bonus", 1, false},
+		{"10 bonuses", 10, false},
+		{"11 bonuses", 11, true},
+		{"100 bonuses", 100, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := h.validateRequest(makeReq(tc.count))
+			if tc.wantErr && got == "" {
+				t.Error("expected error but got none")
+			}
+			if !tc.wantErr && got != "" {
+				t.Errorf("expected no error but got %q", got)
+			}
+		})
+	}
+}
+
 func TestValidateRequestSalaryBounds(t *testing.T) {
 	h := NewSubmissionsHandler(&MockStore{}, "")
 
@@ -178,6 +320,50 @@ func TestCreate(t *testing.T) {
 		}
 	})
 
+	t.Run("413 body too large", func(t *testing.T) {
+		store := authStore(ownerID)
+		h := NewSubmissionsHandler(store, "")
+		// build a JSON body slightly over 64KB (64*1024 = 65536 bytes)
+		bigBody := `{"company_name":"` + strings.Repeat("a", 66000) + `"}`
+		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(bigBody))
+		req.Header.Set("Authorization", "Bearer tok")
+		rec := httptest.NewRecorder()
+		middleware.Auth(store)(http.HandlerFunc(h.Create)).ServeHTTP(rec, req)
+		if rec.Code != http.StatusRequestEntityTooLarge {
+			t.Errorf("got %d, want 413", rec.Code)
+		}
+	})
+
+	t.Run("429 rate limited has Retry-After header", func(t *testing.T) {
+		sub := makeSubmission("new-sub")
+		ownerStr := "owner-uuid"
+		store := &MockStore{
+			OwnerByToken:     &ownerStr,
+			CreatedSubmission: &sub,
+		}
+		h := NewSubmissionsHandler(store, "") // empty secret = turnstile skipped
+		body := `{"company_name":"Test Co","job_title":"Engineer","industry_id":1,"city_id":1,"seniority":"mid","work_arrangement":"office","employment_type":"full_time","base_salary":50000,"salary_year":2025,"turnstile_token":"tok"}`
+
+		// Exhaust the burst bucket (3 allowed per hour)
+		for i := 0; i < 3; i++ {
+			req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(body))
+			rec := httptest.NewRecorder()
+			h.Create(rec, req)
+		}
+
+		// 4th request must be rate limited
+		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(body))
+		rec := httptest.NewRecorder()
+		h.Create(rec, req)
+
+		if rec.Code != http.StatusTooManyRequests {
+			t.Errorf("got %d, want 429", rec.Code)
+		}
+		if rec.Header().Get("Retry-After") == "" {
+			t.Error("missing Retry-After header on 429 response")
+		}
+	})
+
 	t.Run("400 validate fails", func(t *testing.T) {
 		store := authStore(ownerID)
 		h := NewSubmissionsHandler(store, "")
@@ -255,6 +441,19 @@ func TestUpdate(t *testing.T) {
 		middleware.Auth(store)(http.HandlerFunc(h.Update)).ServeHTTP(rec, req)
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("got %d, want 400", rec.Code)
+		}
+	})
+
+	t.Run("413 body too large", func(t *testing.T) {
+		store := authStore(ownerID)
+		h := NewSubmissionsHandler(store, "")
+		bigBody := `{"company_name":"` + strings.Repeat("a", 66000) + `"}` // 66019 bytes > 64KB limit
+		req := httptest.NewRequest(http.MethodPut, "/api/submissions/sub-123", strings.NewReader(bigBody))
+		req.Header.Set("Authorization", "Bearer tok")
+		rec := httptest.NewRecorder()
+		middleware.Auth(store)(http.HandlerFunc(h.Update)).ServeHTTP(rec, req)
+		if rec.Code != http.StatusRequestEntityTooLarge {
+			t.Errorf("got %d, want 413", rec.Code)
 		}
 	})
 

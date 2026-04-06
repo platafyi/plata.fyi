@@ -105,6 +105,7 @@ func (rl *IPRateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := RealIP(r)
 		if !rl.getLimiter(ip).Allow() {
+			w.Header().Set("Retry-After", "1")
 			http.Error(w, `{"error":"Премногу барања. Обидете се повторно подоцна."}`, http.StatusTooManyRequests)
 			return
 		}
