@@ -101,6 +101,7 @@ function IndustryContent({ slug }: { slug: string }) {
 
       <FilterBar industries={industries} cities={cities} lockedIndustry={slug} />
 
+      <div id="salary-table" />
       {loading ? (
         <div className="text-center py-16 text-gray-500">Се вчитува...</div>
       ) : error ? (

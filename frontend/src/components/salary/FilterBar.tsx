@@ -13,6 +13,19 @@ interface Props {
   lockedIndustry?: string;
 }
 
+const isMobile = () => typeof window !== "undefined" && window.innerWidth < 640;
+
+// For same-page filter changes: prevent Next.js scroll-to-top, then scroll to table
+const scrollSamePage = () => {
+  if (!isMobile()) return;
+  setTimeout(() => {
+    document.getElementById("salary-table")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 50);
+};
+
+// For cross-page navigation: append hash so the browser scrolls after the new page renders
+const tableHash = () => (isMobile() ? "#salary-table" : "");
+
 export default function FilterBar({ industries, cities, lockedCity, lockedIndustry }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,12 +42,17 @@ export default function FilterBar({ industries, cities, lockedCity, lockedIndust
         if (value) {
           if (lockedIndustry) {
             params.set("city", value);
-            router.push(`${pathname}?${params.toString()}`);
+            router.push(`${pathname}?${params.toString()}${tableHash()}`, { scroll: false });
+            scrollSamePage();
           } else {
-            router.push(`/city/${value}${qs ? `?${qs}` : ""}`);
+            router.push(`/city/${value}${qs ? `?${qs}` : ""}${tableHash()}`);
           }
         } else {
-          router.push(lockedIndustry ? `${pathname}${qs ? `?${qs}` : ""}` : `/${qs ? `?${qs}` : ""}`);
+          const dest = lockedIndustry
+            ? `${pathname}${qs ? `?${qs}` : ""}${tableHash()}`
+            : `/${qs ? `?${qs}` : ""}${tableHash()}`;
+          router.push(dest, { scroll: false });
+          scrollSamePage();
         }
         return;
       }
@@ -45,12 +63,17 @@ export default function FilterBar({ industries, cities, lockedCity, lockedIndust
         if (value) {
           if (lockedCity) {
             params.set("industry", value);
-            router.push(`${pathname}?${params.toString()}`);
+            router.push(`${pathname}?${params.toString()}${tableHash()}`, { scroll: false });
+            scrollSamePage();
           } else {
-            router.push(`/industry/${value}${qs ? `?${qs}` : ""}`);
+            router.push(`/industry/${value}${qs ? `?${qs}` : ""}${tableHash()}`);
           }
         } else {
-          router.push(lockedCity ? `${pathname}${qs ? `?${qs}` : ""}` : `/${qs ? `?${qs}` : ""}`);
+          const dest = lockedCity
+            ? `${pathname}${qs ? `?${qs}` : ""}${tableHash()}`
+            : `/${qs ? `?${qs}` : ""}${tableHash()}`;
+          router.push(dest, { scroll: false });
+          scrollSamePage();
         }
         return;
       }
@@ -60,7 +83,8 @@ export default function FilterBar({ industries, cities, lockedCity, lockedIndust
       } else {
         params.delete(key);
       }
-      router.push(`${pathname}?${params.toString()}`);
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      scrollSamePage();
     },
     [router, searchParams, pathname, lockedCity, lockedIndustry]
   );

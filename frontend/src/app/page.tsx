@@ -99,6 +99,7 @@ function HomeContent() {
       <FilterBar industries={industries} cities={cities} />
 
       {/* Table */}
+      <div id="salary-table" />
       {loading ? (
         <div className="text-center py-16 text-gray-500">Се вчитува...</div>
       ) : error ? (
