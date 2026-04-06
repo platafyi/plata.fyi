@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+spec:
+  schedule: "0 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pg-dump
+              image: postgres:16-alpine
+              env:
+                - name: DB_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: platafyi-secret
+                      key: DB_URL
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  FILE="/backups/platafyi_$(date +%Y%m%d_%H%M%S).sql"
+                  pg_dump "$DB_URL" > "$FILE"
+                  echo "Backup written to $FILE"
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: postgres-backup-pvc
