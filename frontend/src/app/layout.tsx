@@ -3,6 +3,7 @@ import { Unbounded, Manrope } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import Script from "next/script";
 
 const jost = Unbounded({
   subsets: ["latin"],
@@ -48,6 +49,12 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <Script
+          defer
+          src="https://cloud.umami.is/script.js"
+          data-website-id="7cd147f4-0fe0-4220-9ea5-94bde4eaf0ff"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

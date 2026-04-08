@@ -130,4 +130,14 @@ Deployment-от е целосно автоматизиран преку [GitHub 
 Манифестите се во `k8s/` (управувани со Kustomize). Deploy job-от го patch-ува image tag-от на тековниот commit SHA пред примена, 
 така секој deployment е поврзан со точен build преку GIT_SHA.
 
-Потребни GitHub secrets: `KUBECONFIG` (base64-encoded kubeconfig), `TURNSTILE_SECRET`, `DB_URL`. <-- Веќе постојат како Secrets
+## Аналитика
+
+Проектот користи [Umami](https://umami.is/) за аналитика на посетеност. Umami е приватна, open-source алтернатива на 
+Google Analytics која не собира лични податоци, не поставува cookies и не ги следи корисниците. 
+Сите податоци се анонимни по дизајн. Не е потребен cookie banner.
+
+Повеќе информации: [Umami Privacy Policy](https://umami.is/privacy)
+
+---
+
+Потребни GitHub secrets: `KUBECONFIG` (base64-encoded kubeconfig), `TURNSTILE_SECRET`, `DB_URL`, `IP_HMAC_SECRET`. <-- Веќе постојат како Secrets
