@@ -10,8 +10,12 @@ import type {
   SubmissionInput,
 } from "@/types";
 
+// Server-side: use internal k8s service URL to avoid routing through Cloudflare
+// Client-side: use public API URL (NEXT_PUBLIC_* is inlined at build time)
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  typeof window === "undefined"
+    ? process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 async function apiFetch<T>(
   path: string,

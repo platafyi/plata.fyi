@@ -23,6 +23,8 @@ spec:
           env:
             - name: NEXT_PUBLIC_API_URL
               value: "https://api.plata.fyi"
+            - name: INTERNAL_API_URL
+              value: "http://platafyi-backend"
           readinessProbe:
             httpGet:
               path: /
