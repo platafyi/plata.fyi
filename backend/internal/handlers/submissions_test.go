@@ -594,7 +594,7 @@ func TestIPVelocityCheck(t *testing.T) {
 		}
 	})
 
-	t.Run("201 when IP has 4 submissions (over limit)", func(t *testing.T) {
+	t.Run("429 when IP has 4 submissions (over limit)", func(t *testing.T) {
 		sub := makeSubmission("new-sub")
 		store := authStore(ownerID)
 		store.IPHMACCount = 4
@@ -605,7 +605,7 @@ func TestIPVelocityCheck(t *testing.T) {
 		rec := httptest.NewRecorder()
 		middleware.Auth(store)(http.HandlerFunc(h.Create)).ServeHTTP(rec, req)
 		if rec.Code != http.StatusTooManyRequests {
-			t.Errorf("got %d, want 201", rec.Code)
+			t.Errorf("got %d, want 429", rec.Code)
 		}
 	})
 
