@@ -90,6 +90,8 @@ func (m *MockStore) CountRecentSubmissionsByIPHMAC(_ context.Context, _ string, 
 	return m.IPHMACCount, m.IPHMACErr
 }
 
+func (m *MockStore) NullifyOldIPHMACs(_ context.Context) error { return nil }
+
 func (m *MockStore) SearchSalaries(_ context.Context, _ database.SearchFilters) ([]database.SalarySubmission, int, error) {
 	return m.SearchResults, m.SearchTotal, m.SearchErr
 }

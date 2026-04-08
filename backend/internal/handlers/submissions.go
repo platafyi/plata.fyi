@@ -216,7 +216,7 @@ func (h *SubmissionsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// The IP is never stored, only its HMAC-SHA256 hash is used for comparison.
 	if h.ipHMACSecret != "" {
 		ipHash := hmacIP(h.ipHMACSecret, remoteIP)
-		count, err := h.store.CountRecentSubmissionsByIPHMAC(r.Context(), ipHash, time.Now().Add(-24*time.Hour))
+		count, err := h.store.CountRecentSubmissionsByIPHMAC(r.Context(), ipHash, time.Now().Add(-12*time.Hour))
 		if err != nil {
 			jsonError(w, "Грешка при проверка", http.StatusInternalServerError)
 			return

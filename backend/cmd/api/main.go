@@ -92,6 +92,17 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 
+	// Periodically nullify IP hashes older than 12h to minimise data retention.
+	go func() {
+		ticker := time.NewTicker(time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			if err := store.NullifyOldIPHMACs(context.Background()); err != nil {
+				log.Printf("nullify ip hmacs: %v", err)
+			}
+		}
+	}()
+
 	go func() {
 		log.Printf("starting server on %s", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

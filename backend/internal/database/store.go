@@ -23,6 +23,7 @@ type Store interface {
 	UpdateSubmission(ctx context.Context, id, ownerID string, inp CreateSubmissionInput) error
 	DeleteSubmission(ctx context.Context, id, ownerID string) error
 	CountRecentSubmissionsByIPHMAC(ctx context.Context, ipHMAC string, since time.Time) (int, error)
+	NullifyOldIPHMACs(ctx context.Context) error
 
 	SearchSalaries(ctx context.Context, f SearchFilters) ([]SalarySubmission, int, error)
 	GetSalaryStats(ctx context.Context, groupBy string, f SearchFilters) ([]SalaryStats, error)

@@ -430,6 +430,19 @@ func (s *PostgresStore) CountRecentSubmissionsByIPHMAC(ctx context.Context, ipHM
 	return count, err
 }
 
+// NullifyOldIPHMACs removes IP hashes from submissions older than 12 hours.
+// Called periodically to minimise data retention — the hash is only needed
+// for the 12h velocity window and is useless after that.
+func (s *PostgresStore) NullifyOldIPHMACs(ctx context.Context) error {
+	_, err := s.db.ExecContext(ctx,
+		`UPDATE salary_submissions
+		 SET submitter_ip_hmac = NULL
+		 WHERE submitter_ip_hmac IS NOT NULL
+		   AND created_at < NOW() - INTERVAL '12 hours'`,
+	)
+	return err
+}
+
 func (s *PostgresStore) getBonuses(ctx context.Context, submissionID string) ([]Bonus, error) {
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT id, submission_id, bonus_type, amount, frequency, created_at
