@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -17,15 +20,26 @@ import (
 type SubmissionsHandler struct {
 	store           database.Store
 	turnstileSecret string
+	ipHMACSecret    string
 	createRL        *middleware.KeyRateLimiter
 }
 
-func NewSubmissionsHandler(store database.Store, turnstileSecret string) *SubmissionsHandler {
+func NewSubmissionsHandler(store database.Store, turnstileSecret, ipHMACSecret string) *SubmissionsHandler {
 	return &SubmissionsHandler{
 		store:           store,
 		turnstileSecret: turnstileSecret,
+		ipHMACSecret:    ipHMACSecret,
 		createRL:        middleware.NewKeyRateLimiter(rate.Limit(3.0/3600), 3), // 3/hour per IP
 	}
+}
+
+// hmacIP returns HMAC-SHA256(secret, ip) as a hex string.
+// The raw IP is never stored. Without the secret key the hash cannot be reversed.
+// Keep IP_HMAC_SECRET strictly separate from DB backups, never log or export it.
+func hmacIP(secret, ip string) string {
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(ip))
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 var validSeniorities = map[string]bool{
@@ -196,6 +210,24 @@ func (h *SubmissionsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	remoteIP := middleware.RealIP(r)
+
+	// Velocity check: block if this IP has submitted 3+ times in the last 24h.
+	// The IP is never stored, only its HMAC-SHA256 hash is used for comparison.
+	if h.ipHMACSecret != "" {
+		ipHash := hmacIP(h.ipHMACSecret, remoteIP)
+		count, err := h.store.CountRecentSubmissionsByIPHMAC(r.Context(), ipHash, time.Now().Add(-24*time.Hour))
+		if err != nil {
+			jsonError(w, "Грешка при проверка", http.StatusInternalServerError)
+			return
+		}
+		if count >= 3 {
+			w.Header().Set("Retry-After", "86400")
+			jsonError(w, "Премногу барања. Обидете се подоцна.", http.StatusTooManyRequests)
+			return
+		}
+	}
+
 	var ownerID string
 	var newSessionToken string
 
@@ -267,6 +299,11 @@ func (h *SubmissionsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var ipHash string
+	if h.ipHMACSecret != "" {
+		ipHash = hmacIP(h.ipHMACSecret, remoteIP)
+	}
+
 	sub, err := h.store.CreateSubmission(r.Context(), database.CreateSubmissionInput{
 		OwnerID:         ownerID,
 		CompanyName:     strings.TrimSpace(req.CompanyName),
@@ -283,6 +320,7 @@ func (h *SubmissionsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		BaseSalary:      req.BaseSalary,
 		SalaryYear:      req.SalaryYear,
 		CompanyType:     req.CompanyType,
+		SubmitterIPHMAC: ipHash,
 		Bonuses:         bonuses,
 	})
 	if err != nil {

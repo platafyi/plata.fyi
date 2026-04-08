@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"time"
 
 	"github.com/platafyi/plata.fyi/internal/database"
 )
@@ -30,6 +31,8 @@ type MockStore struct {
 	SubmissionByIDErr error
 	UpdateErr         error
 	DeleteErr         error
+	IPHMACCount       int
+	IPHMACErr         error
 
 	SearchResults []database.SalarySubmission
 	SearchTotal   int
@@ -82,6 +85,10 @@ func (m *MockStore) UpdateSubmission(_ context.Context, _, _ string, _ database.
 }
 
 func (m *MockStore) DeleteSubmission(_ context.Context, _, _ string) error { return m.DeleteErr }
+
+func (m *MockStore) CountRecentSubmissionsByIPHMAC(_ context.Context, _ string, _ time.Time) (int, error) {
+	return m.IPHMACCount, m.IPHMACErr
+}
 
 func (m *MockStore) SearchSalaries(_ context.Context, _ database.SearchFilters) ([]database.SalarySubmission, int, error) {
 	return m.SearchResults, m.SearchTotal, m.SearchErr

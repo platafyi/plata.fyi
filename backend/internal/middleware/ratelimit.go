@@ -114,6 +114,9 @@ func (rl *IPRateLimiter) Middleware(next http.Handler) http.Handler {
 }
 
 func RealIP(r *http.Request) string {
+	if ip := r.Header.Get("CF-Connecting-IP"); ip != "" {
+		return ip
+	}
 	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
 		// Take the first IP (client IP before proxies)
 		for i := 0; i < len(ip); i++ {

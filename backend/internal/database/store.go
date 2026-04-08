@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 type Store interface {
@@ -21,6 +22,7 @@ type Store interface {
 	GetSubmissionByID(ctx context.Context, id string) (*SalarySubmission, error)
 	UpdateSubmission(ctx context.Context, id, ownerID string, inp CreateSubmissionInput) error
 	DeleteSubmission(ctx context.Context, id, ownerID string) error
+	CountRecentSubmissionsByIPHMAC(ctx context.Context, ipHMAC string, since time.Time) (int, error)
 
 	SearchSalaries(ctx context.Context, f SearchFilters) ([]SalarySubmission, int, error)
 	GetSalaryStats(ctx context.Context, groupBy string, f SearchFilters) ([]SalaryStats, error)

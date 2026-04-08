@@ -33,7 +33,7 @@ func authStore(ownerID string) *MockStore {
 }
 
 func TestValidateRequestStringLengths(t *testing.T) {
-	h := NewSubmissionsHandler(&MockStore{}, "")
+	h := NewSubmissionsHandler(&MockStore{}, "", "")
 
 	base := func() *submissionRequest {
 		return &submissionRequest{
@@ -89,7 +89,7 @@ func TestValidateRequestStringLengths(t *testing.T) {
 }
 
 func TestValidateRequestYearsBounds(t *testing.T) {
-	h := NewSubmissionsHandler(&MockStore{}, "")
+	h := NewSubmissionsHandler(&MockStore{}, "", "")
 
 	base := func() *submissionRequest {
 		return &submissionRequest{
@@ -133,7 +133,7 @@ func TestValidateRequestYearsBounds(t *testing.T) {
 }
 
 func TestValidateRequestBonusCap(t *testing.T) {
-	h := NewSubmissionsHandler(&MockStore{}, "")
+	h := NewSubmissionsHandler(&MockStore{}, "", "")
 
 	makeReq := func(n int) *submissionRequest {
 		bonuses := make([]bonusRequest, n)
@@ -175,7 +175,7 @@ func TestValidateRequestBonusCap(t *testing.T) {
 }
 
 func TestValidateRequestSalaryBounds(t *testing.T) {
-	h := NewSubmissionsHandler(&MockStore{}, "")
+	h := NewSubmissionsHandler(&MockStore{}, "", "")
 
 	baseReq := func(employmentType string, salary int) *submissionRequest {
 		return &submissionRequest{
@@ -229,7 +229,7 @@ func TestList(t *testing.T) {
 
 	t.Run("401 no auth", func(t *testing.T) {
 		store := &MockStore{}
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodGet, "/api/submissions", nil)
 		rec := httptest.NewRecorder()
 		middleware.Auth(store)(http.HandlerFunc(h.List)).ServeHTTP(rec, req)
@@ -241,7 +241,7 @@ func TestList(t *testing.T) {
 	t.Run("500 db query fails", func(t *testing.T) {
 		store := authStore(ownerID)
 		store.SubmissionsErr = errors.New("db error")
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodGet, "/api/submissions", nil)
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -253,7 +253,7 @@ func TestList(t *testing.T) {
 
 	t.Run("200 empty list", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodGet, "/api/submissions", nil)
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -269,7 +269,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("401 no auth", func(t *testing.T) {
 		store := &MockStore{}
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(validSubmissionBody))
 		rec := httptest.NewRecorder()
 		middleware.Auth(store)(http.HandlerFunc(h.Create)).ServeHTTP(rec, req)
@@ -281,7 +281,7 @@ func TestCreate(t *testing.T) {
 	t.Run("500 limit check fails", func(t *testing.T) {
 		store := authStore(ownerID)
 		store.SubmissionsErr = errors.New("db error")
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(validSubmissionBody))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -298,7 +298,7 @@ func TestCreate(t *testing.T) {
 			makeSubmission("sub-2"),
 			makeSubmission("sub-3"),
 		}
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(validSubmissionBody))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -310,7 +310,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("400 invalid json", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader("not-json"))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -322,7 +322,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("413 body too large", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		// build a JSON body slightly over 64KB (64*1024 = 65536 bytes)
 		bigBody := `{"company_name":"` + strings.Repeat("a", 66000) + `"}`
 		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(bigBody))
@@ -338,10 +338,10 @@ func TestCreate(t *testing.T) {
 		sub := makeSubmission("new-sub")
 		ownerStr := "owner-uuid"
 		store := &MockStore{
-			OwnerByToken:     &ownerStr,
+			OwnerByToken:      &ownerStr,
 			CreatedSubmission: &sub,
 		}
-		h := NewSubmissionsHandler(store, "") // empty secret = turnstile skipped
+		h := NewSubmissionsHandler(store, "", "") // empty secret = turnstile skipped
 		body := `{"company_name":"Test Co","job_title":"Engineer","industry_id":1,"city_id":1,"seniority":"mid","work_arrangement":"office","employment_type":"full_time","base_salary":50000,"salary_year":2025,"turnstile_token":"tok"}`
 
 		// Exhaust the burst bucket (3 allowed per hour)
@@ -366,7 +366,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("400 validate fails", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		body := `{"company_name":"","job_title":"","industry_id":0,"city_id":0,"seniority":"","work_arrangement":"","base_salary":0}`
 		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(body))
 		req.Header.Set("Authorization", "Bearer tok")
@@ -380,7 +380,7 @@ func TestCreate(t *testing.T) {
 	t.Run("500 create fails", func(t *testing.T) {
 		store := authStore(ownerID)
 		store.CreateErr = errors.New("db error")
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(validSubmissionBody))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -394,7 +394,7 @@ func TestCreate(t *testing.T) {
 		sub := makeSubmission("new-sub-id")
 		store := authStore(ownerID)
 		store.CreatedSubmission = &sub
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(validSubmissionBody))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -410,7 +410,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("401 no auth", func(t *testing.T) {
 		store := &MockStore{}
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPut, "/api/submissions/sub-123", strings.NewReader(validSubmissionBody))
 		rec := httptest.NewRecorder()
 		middleware.Auth(store)(http.HandlerFunc(h.Update)).ServeHTTP(rec, req)
@@ -421,7 +421,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("400 empty id", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		// path /api/submissions only has 2 parts → empty ID
 		req := httptest.NewRequest(http.MethodPut, "/api/submissions", strings.NewReader(validSubmissionBody))
 		req.Header.Set("Authorization", "Bearer tok")
@@ -434,7 +434,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("400 invalid json", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPut, "/api/submissions/sub-123", strings.NewReader("not-json"))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -446,7 +446,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("413 body too large", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		bigBody := `{"company_name":"` + strings.Repeat("a", 66000) + `"}` // 66019 bytes > 64KB limit
 		req := httptest.NewRequest(http.MethodPut, "/api/submissions/sub-123", strings.NewReader(bigBody))
 		req.Header.Set("Authorization", "Bearer tok")
@@ -459,7 +459,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("400 validate fails", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		body := `{"company_name":"","job_title":"","industry_id":0,"city_id":0,"seniority":"","work_arrangement":"","base_salary":0}`
 		req := httptest.NewRequest(http.MethodPut, "/api/submissions/sub-123", strings.NewReader(body))
 		req.Header.Set("Authorization", "Bearer tok")
@@ -473,7 +473,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("404 not found", func(t *testing.T) {
 		store := authStore(ownerID)
 		store.UpdateErr = sql.ErrNoRows
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPut, "/api/submissions/sub-123", strings.NewReader(validSubmissionBody))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -486,7 +486,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("500 update fails", func(t *testing.T) {
 		store := authStore(ownerID)
 		store.UpdateErr = errors.New("db error")
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPut, "/api/submissions/sub-123", strings.NewReader(validSubmissionBody))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -498,7 +498,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("204 happy path", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodPut, "/api/submissions/sub-123", strings.NewReader(validSubmissionBody))
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -514,7 +514,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("401 no auth", func(t *testing.T) {
 		store := &MockStore{}
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodDelete, "/api/submissions/sub-123", nil)
 		rec := httptest.NewRecorder()
 		middleware.Auth(store)(http.HandlerFunc(h.Delete)).ServeHTTP(rec, req)
@@ -525,7 +525,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("400 empty id", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodDelete, "/api/submissions", nil)
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -538,7 +538,7 @@ func TestDelete(t *testing.T) {
 	t.Run("404 not found", func(t *testing.T) {
 		store := authStore(ownerID)
 		store.DeleteErr = sql.ErrNoRows
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodDelete, "/api/submissions/sub-123", nil)
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -551,7 +551,7 @@ func TestDelete(t *testing.T) {
 	t.Run("500 delete fails", func(t *testing.T) {
 		store := authStore(ownerID)
 		store.DeleteErr = errors.New("db error")
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodDelete, "/api/submissions/sub-123", nil)
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
@@ -563,13 +563,97 @@ func TestDelete(t *testing.T) {
 
 	t.Run("204 happy path", func(t *testing.T) {
 		store := authStore(ownerID)
-		h := NewSubmissionsHandler(store, "")
+		h := NewSubmissionsHandler(store, "", "")
 		req := httptest.NewRequest(http.MethodDelete, "/api/submissions/sub-123", nil)
 		req.Header.Set("Authorization", "Bearer tok")
 		rec := httptest.NewRecorder()
 		middleware.Auth(store)(http.HandlerFunc(h.Delete)).ServeHTTP(rec, req)
 		if rec.Code != http.StatusNoContent {
 			t.Errorf("got %d, want 204", rec.Code)
+		}
+	})
+}
+
+func TestIPVelocityCheck(t *testing.T) {
+	ownerID := "owner-uuid"
+	const secret = "test-secret"
+
+	t.Run("429 when IP has 3+ submissions in last 24h", func(t *testing.T) {
+		store := authStore(ownerID)
+		store.IPHMACCount = 3 // mock: already 3 submissions from this IP
+		h := NewSubmissionsHandler(store, "", secret)
+		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(validSubmissionBody))
+		req.Header.Set("Authorization", "Bearer tok")
+		rec := httptest.NewRecorder()
+		middleware.Auth(store)(http.HandlerFunc(h.Create)).ServeHTTP(rec, req)
+		if rec.Code != http.StatusTooManyRequests {
+			t.Errorf("got %d, want 429", rec.Code)
+		}
+		if rec.Header().Get("Retry-After") == "" {
+			t.Error("missing Retry-After header on velocity-limited response")
+		}
+	})
+
+	t.Run("201 when IP has 4 submissions (over limit)", func(t *testing.T) {
+		sub := makeSubmission("new-sub")
+		store := authStore(ownerID)
+		store.IPHMACCount = 4
+		store.CreatedSubmission = &sub
+		h := NewSubmissionsHandler(store, "", secret)
+		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(validSubmissionBody))
+		req.Header.Set("Authorization", "Bearer tok")
+		rec := httptest.NewRecorder()
+		middleware.Auth(store)(http.HandlerFunc(h.Create)).ServeHTTP(rec, req)
+		if rec.Code != http.StatusTooManyRequests {
+			t.Errorf("got %d, want 201", rec.Code)
+		}
+	})
+
+	t.Run("velocity check skipped when secret is empty", func(t *testing.T) {
+		sub := makeSubmission("new-sub")
+		store := authStore(ownerID)
+		store.IPHMACCount = 99 // would trigger if secret were set
+		store.CreatedSubmission = &sub
+		h := NewSubmissionsHandler(store, "", "") // no secret
+		req := httptest.NewRequest(http.MethodPost, "/api/submissions", strings.NewReader(validSubmissionBody))
+		req.Header.Set("Authorization", "Bearer tok")
+		rec := httptest.NewRecorder()
+		middleware.Auth(store)(http.HandlerFunc(h.Create)).ServeHTTP(rec, req)
+		if rec.Code != http.StatusCreated {
+			t.Errorf("got %d, want 201 (velocity check must be skipped in dev mode)", rec.Code)
+		}
+	})
+}
+
+func TestHMACIP(t *testing.T) {
+	t.Run("same IP and secret produce same hash", func(t *testing.T) {
+		h1 := hmacIP("secret", "1.2.3.4")
+		h2 := hmacIP("secret", "1.2.3.4")
+		if h1 != h2 {
+			t.Error("expected deterministic output")
+		}
+	})
+
+	t.Run("different IPs produce different hashes", func(t *testing.T) {
+		h1 := hmacIP("secret", "1.2.3.4")
+		h2 := hmacIP("secret", "1.2.3.5")
+		if h1 == h2 {
+			t.Error("expected different IPs to produce different hashes")
+		}
+	})
+
+	t.Run("same IP with different secrets produce different hashes", func(t *testing.T) {
+		h1 := hmacIP("secret-a", "1.2.3.4")
+		h2 := hmacIP("secret-b", "1.2.3.4")
+		if h1 == h2 {
+			t.Error("expected different secrets to produce different hashes")
+		}
+	})
+
+	t.Run("hash is 64 hex chars (SHA-256 output)", func(t *testing.T) {
+		h := hmacIP("secret", "1.2.3.4")
+		if len(h) != 64 {
+			t.Errorf("expected 64 chars, got %d", len(h))
 		}
 	})
 }

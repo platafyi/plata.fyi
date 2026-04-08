@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func nullStringToPtr(ns sql.NullString) *string {
@@ -123,22 +124,23 @@ func (s *PostgresStore) ExchangeToken(ctx context.Context, magicToken, sessionTo
 }
 
 type CreateSubmissionInput struct {
-	OwnerID         string
-	CompanyName     string
-	CompanyRegNo    string
-	JobTitle        string
-	IndustryID      int
-	CityID          int
-	Seniority       string
-	YearsAtCompany  int
-	YearsExperience int
-	WorkArrangement string
-	EmploymentType  string
-	HoursPerWeek    *int
-	BaseSalary      int
-	SalaryYear      int
-	CompanyType     string
-	Bonuses         []BonusInput
+	OwnerID          string
+	CompanyName      string
+	CompanyRegNo     string
+	JobTitle         string
+	IndustryID       int
+	CityID           int
+	Seniority        string
+	YearsAtCompany   int
+	YearsExperience  int
+	WorkArrangement  string
+	EmploymentType   string
+	HoursPerWeek     *int
+	BaseSalary       int
+	SalaryYear       int
+	CompanyType      string
+	SubmitterIPHMAC  string
+	Bonuses          []BonusInput
 }
 
 type BonusInput struct {
@@ -170,17 +172,23 @@ func (s *PostgresStore) CreateSubmission(ctx context.Context, inp CreateSubmissi
 	if inp.CompanyType != "" {
 		companyType = inp.CompanyType
 	}
+	var ipHMAC interface{}
+	if inp.SubmitterIPHMAC != "" {
+		ipHMAC = inp.SubmitterIPHMAC
+	}
 	err = tx.QueryRowContext(ctx,
 		`INSERT INTO salary_submissions
 		 (owner_id, company_name, company_reg_no, job_title, industry_id, city_id,
 		  seniority, years_at_company, years_experience, work_arrangement,
-		  employment_type, hours_per_week, base_salary, salary_year, company_type)
-		 VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+		  employment_type, hours_per_week, base_salary, salary_year, company_type,
+		  submitter_ip_hmac)
+		 VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
 		 RETURNING id, created_at, updated_at`,
 		inp.OwnerID, inp.CompanyName, regNo, inp.JobTitle,
 		inp.IndustryID, inp.CityID, inp.Seniority,
 		inp.YearsAtCompany, inp.YearsExperience, inp.WorkArrangement,
 		employmentType, inp.HoursPerWeek, inp.BaseSalary, inp.SalaryYear, companyType,
+		ipHMAC,
 	).Scan(&sub.ID, &sub.CreatedAt, &sub.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("insert submission: %w", err)
@@ -408,6 +416,18 @@ func (s *PostgresStore) upsertCompany(ctx context.Context, name, regNo string) {
 		reg = regNo
 	}
 	s.db.ExecContext(ctx, `INSERT INTO companies (name, reg_no) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING`, name, reg)
+}
+
+// CountRecentSubmissionsByIPHMAC returns the number of submissions from the given
+// HMAC-hashed IP address created on or after `since`. Used for velocity checks.
+func (s *PostgresStore) CountRecentSubmissionsByIPHMAC(ctx context.Context, ipHMAC string, since time.Time) (int, error) {
+	var count int
+	err := s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM salary_submissions
+		 WHERE submitter_ip_hmac = $1 AND created_at >= $2`,
+		ipHMAC, since,
+	).Scan(&count)
+	return count, err
 }
 
 func (s *PostgresStore) getBonuses(ctx context.Context, submissionID string) ([]Bonus, error) {

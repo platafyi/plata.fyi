@@ -102,7 +102,7 @@ jobs:
       - name: Inject runtime secrets
         run: |
           kubectl patch secret platafyi-secret -n platafyi \
-            --patch "{\"stringData\": {\"TURNSTILE_SECRET\": \"${{ secrets.TURNSTILE_SECRET }}\", \"DB_URL\": \"${{ secrets.DB_URL }}\"}}"
+            --patch "{\"stringData\": {\"TURNSTILE_SECRET\": \"${{ secrets.TURNSTILE_SECRET }}\", \"DB_URL\": \"${{ secrets.DB_URL }}\", \"IP_HMAC_SECRET\": \"${{ secrets.IP_HMAC_SECRET }}\"}}"
 
       - name: Deploy
         run: |

@@ -36,7 +36,7 @@ func main() {
 	healthH := handlers.NewHealthHandler(store)
 	metaH := handlers.NewMetaHandler(store)
 	authH := handlers.NewAuthHandler(store)
-	submissionsH := handlers.NewSubmissionsHandler(store, cfg.TurnstileSecret)
+	submissionsH := handlers.NewSubmissionsHandler(store, cfg.TurnstileSecret, cfg.IPHMACSecret)
 	searchH := handlers.NewSearchHandler(store)
 	companiesH := handlers.NewCompaniesHandler(store)
 	jobTitlesH := handlers.NewJobTitlesHandler(store)
